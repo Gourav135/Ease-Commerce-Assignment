@@ -83,14 +83,47 @@ FROM courier_interactions ORDER BY created_at DESC;
 ## How to add a new courier
 
 1. Create `src/modules/couriers/<name>/<name>CourierAdapter.ts`. Extend `BaseCourierAdapter` and implement `CourierAdapter` (`createOrder` / `trackOrder` / `cancelOrder`). The base class handles 5xx retry with backoff and 401-then-reauth-then-retry-once for you.
+
 2. Register it in `CourierRegistry`'s constructor:
    ```ts
    const adapter = new MyCourierAdapter();
    this.adapters.set(adapter.partnerCode, adapter);
    ```
-3. Add the courier's settings in `config/qa.json` and credentials in `secret/qa.json`.
-4. Wire those into `src/config/courierPartner.js` (add a new block alongside `urbanebolt`) and re-export it from `src/config/index.js` so the adapter can read `config.<courier>.baseUrl` etc.
-5. No worker change needed — the bulk worker uses the same `OrderService` / `CourierRegistry`, so the new courier is picked up automatically. Just restart the process.
+3. **Insert a row into the `couriers` table.** The `id` you pick here is what every `orders.courier_id` will reference and must match the `"courierId"` in your config block (step 4).
+
+   **Option A — proper migration (recommended).** Generates a new migration file that gets tracked in `prisma/migrations/` and applied on every fresh DB.
+
+   ```bash
+   # 1. Create an empty migration directory
+   npx prisma migrate dev --create-only --name add_courier_delhivery
+   ```
+
+   Prisma writes an empty `prisma/migrations/<timestamp>_add_courier_delhivery/migration.sql`. Open it and paste:
+
+   ```sql
+   -- Register a new courier
+   INSERT INTO "couriers" ("id", "name") VALUES (3, 'delhivery');
+
+   -- Keep the auto-increment sequence in sync with the explicit id we just used,
+   -- otherwise the next un-id'd INSERT will try id=3 again and hit a unique violation.
+   SELECT setval('couriers_id_seq', (SELECT MAX(id) FROM "couriers"));
+   ```
+
+   Then apply:
+
+   ```bash
+   npx prisma migrate dev
+   ```
+
+   **OR — quick one-off via psql.** Faster, but skips Prisma's migration tracking, so anyone who later runs `prisma migrate reset` will lose this row.
+
+   ```sql
+   INSERT INTO couriers (id, name) VALUES (3, 'delhivery');
+   SELECT setval('couriers_id_seq', (SELECT MAX(id) FROM "couriers"));
+   ```
+4. Add the courier's settings in `config/qa.json` (including `"courierId": 3` — must match the id from step 3) and credentials in `secret/qa.json`.
+5. Wire those into `src/config/courierPartner.js` (add a new block alongside `urbanebolt`) and re-export it from `src/config/index.js` so the adapter can read `config.<courier>.baseUrl` etc.
+6. No worker change needed — the bulk worker uses the same `OrderService` / `CourierRegistry`, so the new courier is picked up automatically. Just restart the process.
 
 No controllers, services, DTOs, or shared business logic change.
 
