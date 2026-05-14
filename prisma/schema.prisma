@@ -1,0 +1,102 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model couriers {
+  id     Int      @id @default(autoincrement())
+  name   String   @unique
+  orders orders[]
+}
+
+model orders {
+  id                          Int       @id @default(autoincrement())
+  order_id                    String
+  courier_id                  Int
+  courier_order_id            String?
+  awb_number                  String?
+  current_status              String
+  request_payload_raw         Json
+  response_payload_raw        Json?
+  latest_tracking_payload_raw Json?
+  created_at                  DateTime  @default(now())
+  updated_at                  DateTime  @updatedAt
+
+  courier              couriers               @relation(fields: [courier_id], references: [id])
+  tracking_events      tracking_history[]
+  courier_interactions courier_interactions[]
+
+  @@unique([order_id, courier_id])
+  @@index([order_id])
+  @@index([courier_id])
+}
+
+enum CourierInteractionType {
+  CREATE @map("create")
+  TRACK  @map("track")
+  CANCEL @map("cancel")
+}
+
+model courier_interactions {
+  id               Int                    @id @default(autoincrement())
+  order_ref_id     Int
+  interaction_type CourierInteractionType
+  http_status      Int?
+  request_raw      Json
+  response_raw     Json?
+  error_payload    Json?
+  attempt          Int                    @default(1)
+  created_at       DateTime               @default(now())
+
+  order orders @relation(fields: [order_ref_id], references: [id], onDelete: Cascade)
+
+  @@index([order_ref_id, created_at(sort: Desc)])
+  @@index([interaction_type, http_status])
+  @@index([created_at])
+}
+
+model tracking_history {
+  id               Int      @id @default(autoincrement())
+  order_ref_id     Int
+  status           String
+  status_timestamp DateTime
+  payload_raw      Json
+  created_at       DateTime @default(now())
+
+  order orders @relation(fields: [order_ref_id], references: [id], onDelete: Cascade)
+
+  @@index([order_ref_id])
+}
+
+model bulk_batches {
+  id            Int      @id @default(autoincrement())
+  batch_id      String   @unique
+  status        String
+  total_count   Int
+  success_count Int      @default(0)
+  failure_count Int      @default(0)
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  items         bulk_batch_items[]
+}
+
+model bulk_batch_items {
+  id              Int      @id @default(autoincrement())
+  batch_ref_id    Int
+  order_id        String
+  courier_partner String
+  status          String
+  result_payload  Json?
+  error_payload   Json?
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  batch           bulk_batches @relation(fields: [batch_ref_id], references: [id], onDelete: Cascade)
+
+  @@unique([batch_ref_id, order_id])
+}

@@ -1,0 +1,50 @@
+{
+  "nodeEnv": "qa",
+  "port": 3000,
+  "database": {
+    "host": "127.0.0.1",
+    "port": 5432,
+    "name": "postgres",
+    "pool": {
+      "min": 2,
+      "max": 10
+    }
+  },
+  "redis": {
+    "host": "127.0.0.1",
+    "port": 6379,
+    "db": 0
+  },
+  "queues": {
+    "bulkOrders": {
+      "name": "bulk-order-queue",
+      "concurrency": 5
+    }
+  },
+  "urbanebolt": {
+    "courierId": 1,
+    "baseUrl": "",   // put the courier partner API base URL here
+    "customerCode": "",    // put the customer code provided by the courier partner here
+    "tokenEndpoint": "/api/v1/auth/getToken/",
+    "manifestEndpoint": "/api/v1/services/manifest/",
+    "trackingEndpoint": "/api/v1/services/tracking-pub/",
+    "cancelEndpoint": "/api/v1/services/cancel/",
+    "retries": {
+      "maxAttempts": 3,
+      "retryDelayMs": 1000
+    }
+  },
+  "test": {
+    "courierId": 2,
+    "baseUrl": "",    // put the same courier partner API base URL here just to test the second adapter
+    "customerCode": "",    // put the same customer code provided by the courier partner here just to test the second adapter
+    "tokenEndpoint": "/api/v1/auth/getToken/",
+    "manifestEndpoint": "/api/v1/services/manifest/",
+    "trackingEndpoint": "/api/v1/services/tracking-pub/",
+    "cancelEndpoint": "/api/v1/services/cancel/",
+    "retries": {
+      "maxAttempts": 3,
+      "retryDelayMs": 1000
+    }
+  }
+}

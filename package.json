@@ -1,0 +1,32 @@
+{
+  "name": "ease-commerce-assignment",
+  "version": "1.0.0",
+  "description": "Multi-courier integration platform with UrbaneBolt adapter",
+  "main": "dist/server.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "NODE_ENV=qa ts-node-dev --respawn --transpile-only src/server.ts",
+    "migrate": "prisma migrate deploy",
+    "migrate:dev": "prisma migrate dev",
+    "prisma:generate": "prisma generate"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "SEE LICENSE IN LICENSE",
+  "dependencies": {
+    "@bull-board/api": "^7.0.0",
+    "@bull-board/express": "^7.0.0",
+    "@prisma/client": "^6.19.3",
+    "bullmq": "^5.76.8",
+    "config": "^4.4.1",
+    "express": "^5.2.1",
+    "redis": "^5.12.1"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.7.0",
+    "prisma": "^6.19.3",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^6.0.3"
+  }
+}
