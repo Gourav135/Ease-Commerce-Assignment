@@ -15,6 +15,7 @@ import {
   CreateOrderAdapterResult,
   TrackOrderAdapterResult,
 } from "../base/courier.types";
+import {BaseAuth} from "../auth/BaseAuth";
 
 interface UrbaneBoltTokenResponse {
   token?: string;
@@ -29,6 +30,12 @@ export class UrbaneBoltCourierAdapter
   readonly partnerCode = "urbanebolt";
   readonly courierId = config.urbanebolt.courierId;
   private authToken: string | null = null;
+    private baseAuth: BaseAuth;
+
+  constructor() {
+      super();
+      this.baseAuth = new BaseAuth(this.partnerCode)
+  }
 
   async createOrder(order: CreateOrderRequestDto): Promise<CreateOrderAdapterResult> {
     await this.ensureAuthenticated();
@@ -140,10 +147,7 @@ export class UrbaneBoltCourierAdapter
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          username: config.urbanebolt.username,
-          password: config.urbanebolt.password,
-        }),
+        body: this.baseAuth.getBody('login'),
       },
     );
 
